@@ -135,12 +135,12 @@ def reply(message):
                     worker3.json_write(json_message, message)
                     search_flag = 0
 
-    if message.text == "Нет":
+    if message.text == "Нет" and search_flag != 0:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
         markup.add(types.KeyboardButton('Назад'))
         bot.send_message(message.chat.id, "Как пожелаете", reply_markup=markup)
         search_flag = 0
-    if message.text == 'Да':
+    if message.text == 'Да' and search_flag != 0:
         bot.send_message(message.chat.id, "Ваш прогноз почти готов")
         bot.send_sticker(message.chat.id, random.choice(res.STICKERS))
         tmp = str(datetime.datetime.now())
