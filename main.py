@@ -14,9 +14,12 @@ import statechecker
 
 bot = telebot.TeleBot(res.TOKEN)
 
-city_flag = 0
-driverbuff = []
-search_flag = 0
+
+globals = {
+    "search_flag": 0,
+    "city_flag":0,
+    "driverbuff":[]
+}
 
 
 def see_weather(message):
@@ -50,19 +53,18 @@ def reply(message):
     if message.text == 'Хочу узнать погоду':
         see_weather(message)
     if message.text == 'Город🌉':
-        global city_flag
-        city_flag = city_flag + 1
+
+        globals['city_flag'] += 1
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
         back = types.KeyboardButton('Назад')
         markup.add(back)
         bot.send_message(message.chat.id, "Напиши название населённого пункта", reply_markup=markup)
     if message.text == 'Назад':
-        city_flag = 0
+        globals['city_flag'] = 0
         see_weather(message)
-    if city_flag != 0 and message.text != 'Город🌉':
-        global search_flag
-        search_flag += 1
-        city_flag = 0
+    if globals['city_flag'] != 0 and message.text != 'Город🌉':
+        globals["search_flag"] += 1
+        globals['city_flag'] = 0
         bot.send_message(message.chat.id, 'Подождите, обрабатываю запрос')
         bot.send_sticker(message.chat.id, random.choice(res.STICKERS))
         driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -86,12 +88,11 @@ def reply(message):
             markup.add(types.KeyboardButton('Назад'))
             bot.send_message(message.chat.id, zero_search[0].text, reply_markup=markup)
         if len(zero_search) == 0:
-            global driverbuff
-            driverbuff = []
-            driverbuff = html.select('.place-list__item > .link')
-            if message.text != driverbuff[0].text:
+            globals['driverbuff']= []
+            globals['driverbuff'] = html.select('.place-list__item > .link')
+            if message.text != globals['driverbuff'][0].text:
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
-                for el in driverbuff:
+                for el in globals['driverbuff']:
                     markup.add(types.KeyboardButton(f'{el.text}'))
                 markup.add(types.KeyboardButton('Назад'))
                 bot.send_message(message.chat.id, "Вот что удалось найти", reply_markup=markup)
@@ -101,12 +102,12 @@ def reply(message):
                 bot.send_message(message.chat.id, "Обработка...", reply_markup=markup)
             driver.close()
     if message.text != 'Просто мимо проходил' and message.text != 'Хочу узнать погоду' and message.text != 'Город🌉' \
-            and city_flag == 0 and message.text != 'Назад' and search_flag == 0 and message.text != 'Да' and message.text != 'Нет' \
+            and globals['city_flag'] == 0 and message.text != 'Назад' and globals['search_flag'] == 0 and message.text != 'Да' and message.text != 'Нет' \
             and message.text != 'Факт дня⁉️' and message.text != 'Актуальные новости🌏':
         bot.send_message(message.chat.id, "Не торопи коней, я так тебя не пойму)")
 
-    if len(driverbuff) != 0 and search_flag != 0:
-        for city in driverbuff:
+    if len(globals['driverbuff']) != 0 and globals['search_flag'] != 0:
+        for city in globals['driverbuff']:
             if city.text == message.text:
                 global mem
                 mem = city
@@ -133,14 +134,15 @@ def reply(message):
                     worker3 = jsonworker.JsonWorker()
                     json_message = worker3.json_data_organaizer(message.text, tmp, degree)
                     worker3.json_write(json_message, message)
-                    search_flag = 0
+                    globals['search_flag'] = 0
+                    globals['search_flag'] = 0
 
-    if message.text == "Нет" and search_flag != 0:
+    if message.text == "Нет" and globals['search_flag'] != 0:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
         markup.add(types.KeyboardButton('Назад'))
         bot.send_message(message.chat.id, "Как пожелаете", reply_markup=markup)
-        search_flag = 0
-    if message.text == 'Да' and search_flag != 0:
+        globals['search_flag'] = 0
+    if message.text == 'Да' and globals['search_flag'] != 0:
         bot.send_message(message.chat.id, "Ваш прогноз почти готов")
         bot.send_sticker(message.chat.id, random.choice(res.STICKERS))
         tmp = str(datetime.datetime.now())
@@ -158,7 +160,7 @@ def reply(message):
         markup.add(types.KeyboardButton('Назад'))
         bot.send_message(message.chat.id, "Самая свежая информация получена:", reply_markup=markup)
         bot.send_message(message.chat.id, f'{degree}')
-        search_flag = 0
+        globals['search_flag'] = 0
     if message.text == 'Факт дня⁉️':
         r = requests.get('https://randstuff.ru/fact/fav/')
         html = BS(r.content, 'html.parser')
